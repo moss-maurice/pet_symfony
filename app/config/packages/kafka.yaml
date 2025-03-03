@@ -1,0 +1,9 @@
+parameters:
+    kafka.broker: "%env(KAFKA_BROKER)%"
+    kafka.enableAutoCommit: "%env(KAFKA_ENABLE_AUTO_COMMIT)%"
+    kafka.consumerGroupId: "%env(KAFKA_CONSUMER_GROUP_ID)%"
+    kafka.autoOffsetReset: "%env(KAFKA_AUTO_OFFSET_RESET)%"
+    kafka.topic.reports: "%env(KAFKA_REPORTS_TOPIC_ID)%"
+    kafka.topic.products: "%env(KAFKA_PRODUCTS_TOPIC_ID)%"
+    kafka.topic.orders: "%env(KAFKA_ORDERS_TOPIC_ID)%"
+    kafka.topic.users: "%env(KAFKA_USERS_TOPIC_ID)%"

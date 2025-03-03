@@ -1,0 +1,149 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    exceptions:
+        Symfony\Component\HttpKernel\Exception\NotFoundHttpException: { code: 404 }
+        App\Exception\RequestBodyConvertException: { code: 400, hidden: false }
+        App\Exception\UserAlreadyExistsException: { code: 409, hidden: false }
+        App\Exception\UserNotCreatedException: { code: 400, hidden: false }
+        App\Exception\ProductNotFountException: { code: 404, hidden: false }
+        App\Exception\InvalidJsonException: { code: 400, hidden: false }
+        App\Exception\BasketProductAlreadyExistsException: { code: 409, hidden: false }
+        App\Exception\BasketProductsLimitReachedException: { code: 400, hidden: false }
+        App\Exception\BasketProductNotFoundException: { code: 404, hidden: false }
+        App\Exception\BasketItemNotFoundException: { code: 404, hidden: false }
+        App\Exception\EmptyBasketException: { code: 404, hidden: false }
+        App\Exception\ShipmentMethodNotFoundException: { code: 404, hidden: false }
+        App\Exception\OrderNotFoundException: { code: 404, hidden: false }
+        App\Exception\UserAlreadyLoggedException: { code: 409, hidden: false }
+        App\Exception\StatusNotFoundException: { code: 404, hidden: false }
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            #    bool $isDebug: "%kernel.debug%"
+            bool $isDebug: false
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: "../src/"
+        exclude:
+            - "../src/DependencyInjection/"
+            - "../src/Entity/"
+            - "../src/Kernel.php"
+
+    app.normalizer.object_normalizer:
+        class: Symfony\Component\Serializer\Normalizer\ObjectNormalizer
+        tags: ["serialize.normalizer"]
+        arguments:
+            $defaultContext:
+                circular_reference_handler: '@App\Serializer\CircularReferenceHandler'
+                ignored_attributes: ["insertedOn", "updatedOn"]
+
+    App\Exception\Handler\ExceptionMappingResolver:
+        arguments: ["%exceptions%"]
+
+    App\EventListener\OnJwtCreatedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "lexik_jwt_authentication.on_jwt_created" }
+
+    App\EventListener\OnExceptionListener:
+        tags:
+            - { name: "kernel.event_listener", event: "kernel.exception", priority: 10 }
+
+    App\EventListener\OnValidationExceptionListener:
+        tags:
+            - { name: "kernel.event_listener", event: "kernel.exception", priority: 15 }
+
+    App\EventListener\UserOnRegisteredListener:
+        tags:
+            - { name: "kernel.event_listener", event: "user.registered" }
+
+    App\EventListener\UserOnDeletedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "user.deleted" }
+
+    App\EventListener\ProductOnCreatedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "product.created" }
+
+    App\EventListener\BasketOnAddedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "basket.added" }
+
+    App\EventListener\BasketOnUpdatedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "basket.updated" }
+
+    App\EventListener\BasketOnDeletedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "basket.deleted" }
+
+    App\EventListener\BasketOnDropedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "basket.droped" }
+
+    App\EventListener\OrderItemOnAddedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "orderItem.added" }
+
+    App\EventListener\OrderOnCreatedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "order.created" }
+
+    App\EventListener\OrderOnUpdatedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "order.updated" }
+
+    App\Service\KafkaService:
+        arguments:
+            $parameterBag: "@parameter_bag"
+
+    App\Service\GeneratorService:
+        arguments:
+            $faker: '@App\Service\FakerService'
+
+    App\Service\ProductService:
+        arguments:
+            $entityManager: "@doctrine.orm.entity_manager"
+            $serializer: "@serializer"
+
+    App\Service\UserService:
+        arguments:
+            $userRepository: '@App\Repository\UserRepository'
+            $eventDispatcher: "@event_dispatcher"
+
+    App\Service\BasketService:
+        arguments:
+            $basketRepository: '@App\Repository\BasketRepository'
+            $parameterBag: "@parameter_bag"
+            $serializer: "@serializer"
+            $eventDispatcher: "@event_dispatcher"
+
+    App\Service\OrderService:
+        arguments:
+            $orderRepository: '@App\Repository\OrderRepository'
+            $orderStatusRepository: '@App\Repository\OrderStatusRepository'
+            $orderProductRepository: '@App\Repository\OrderProductRepository'
+            $orderShipmentMethodRepository: '@App\Repository\OrderShipmentMethodRepository'
+            $serializer: "@serializer"
+            $eventDispatcher: "@event_dispatcher"
+
+    App\Service\ConsoleService:
+        arguments:
+            $kafkaService: '@App\Service\KafkaService'
+            $orderService: '@App\Service\OrderService'
+            $productService: '@App\Service\ProductService'
+            $generatorService: '@App\Service\GeneratorService'
+            $userService: '@App\Service\UserService'
+            $serializer: "@serializer"
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones

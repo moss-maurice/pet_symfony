@@ -1,0 +1,2 @@
+parameters:
+    app.basketProductsLimit: "%env(APP_BASKET_PRODUCTS_LIMIT)%"
