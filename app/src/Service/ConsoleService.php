@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Request\AddProductRequest;
+use App\Request\CreateOrderRequest;
 use App\Request\UpdateOrderStatusRequest;
 use App\Service\GeneratorService;
 use App\Service\KafkaService;
@@ -15,6 +17,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\SerializerInterface;
 
@@ -215,6 +218,65 @@ final class ConsoleService
             }
 
             $this->userService->factory()->grantRole($userObject, $roleName);
+
+            return Command::SUCCESS;
+        } catch (Exception $exception) {
+            $io->text(Carbon::now()->format('Y-m-d H:i:s.u') . " > " . $exception->getMessage());
+
+            return Command::FAILURE;
+        }
+    }
+
+    public function userCreateOrderFromBasket(InputInterface $input, OutputInterface $output): int
+    {
+        $io = new SymfonyStyle($input, $output);
+
+        $user = $input->getArgument('user');
+        $phone = $input->getArgument('phone');
+        $shipmentMethod = $input->getArgument('shipmentMethod');
+
+        try {
+            if (!$user) {
+                throw new Exception("User not typed!");
+            }
+
+            if (!$phone) {
+                throw new Exception("Phone not typed!");
+            }
+
+            if (!$shipmentMethod) {
+                throw new Exception("Shipment method not typed!");
+            }
+
+            $userObject = $this->userService->factory()->get($user);
+
+            if (!$userObject) {
+                throw new Exception("User not found!");
+            }
+
+            $shipmentMethodObject = $this->orderService->catalogFactory()->shipmentsMethodsItem($shipmentMethod);
+
+            if (!$shipmentMethodObject) {
+                throw new Exception("Shipment method not found!");
+            }
+
+            $orderRequest = new CreateOrderRequest();
+
+            $orderRequest->setPhone($phone);
+            $orderRequest->setShipmentMethod(intval($shipmentMethodObject->getId()));
+
+            // В этот момент появляется главный вопрос - а есть ли в корзине товары? Заранее мы это не проверяем и
+            //  надеемся, что это так. Если товаров нет, то сервис заявок выдаст релевантное сообщение. Если есть -
+            //  создаст ордер. В любом случае, можно сделать набивку корзины пустыми товарами, если в этом есть
+            //  необходимость. Но этот метод лишь для тестирования... Ведь так?
+
+            $response = $this->orderService->createOrder($userObject, $orderRequest);
+
+            if ($response->getStatusCode() !== JsonResponse::HTTP_OK) {
+                throw new Exception($response->getContent());
+            }
+
+            $io->success("Success creating new order: " . $response->getContent());
 
             return Command::SUCCESS;
         } catch (Exception $exception) {
