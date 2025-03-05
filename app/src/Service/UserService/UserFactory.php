@@ -10,7 +10,7 @@ use App\Exception\UserNotCreatedException;
 use App\Service\UserService\AbstractFactory;
 use App\Service\UserService\Interface\UserFactoryInterface;
 
-final class UserFactory extends AbstractFactory implements UserFactoryInterface
+readonly final class UserFactory extends AbstractFactory implements UserFactoryInterface
 {
     public function create(string $name, string $email, string $phone, string $password): User
     {

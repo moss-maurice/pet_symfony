@@ -12,10 +12,8 @@ class BasketOnDeletedEvent extends Event
     public const NAME = 'basket.deleted';
 
     public function __construct(
-        private readonly Basket $basketItem
-    ) {
-        // Do nothing!
-    }
+        readonly private Basket $basketItem
+    ) {}
 
     public function getUser(): User
     {

@@ -10,10 +10,8 @@ class ProductOnCreatedEvent extends Event
     public const NAME = 'product.created';
 
     public function __construct(
-        private readonly Product $product
-    ) {
-        // Do nothing!
-    }
+        readonly private Product $product
+    ) {}
 
     public function getProduct(): Product
     {

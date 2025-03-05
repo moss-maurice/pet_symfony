@@ -5,13 +5,11 @@ namespace App\EventListener;
 use App\Event\OrderOnCreatedEvent;
 use Psr\Log\LoggerInterface;
 
-class OrderOnCreatedListener
+readonly class OrderOnCreatedListener
 {
     public function __construct(
-        readonly private LoggerInterface $logger
-    ) {
-        // Do nothing!
-    }
+        private LoggerInterface $logger
+    ) {}
 
     public function __invoke(OrderOnCreatedEvent $event): void
     {

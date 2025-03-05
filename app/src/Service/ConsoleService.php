@@ -21,15 +21,15 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\SerializerInterface;
 
-final class ConsoleService
+readonly final class ConsoleService
 {
     public function __construct(
-        readonly protected KafkaService $kafkaService,
-        readonly protected OrderService $orderService,
-        readonly protected ProductService $productService,
-        readonly protected GeneratorService $generatorService,
-        readonly protected UserService $userService,
-        readonly protected SerializerInterface $serializer
+        protected KafkaService $kafkaService,
+        protected OrderService $orderService,
+        protected ProductService $productService,
+        protected GeneratorService $generatorService,
+        protected UserService $userService,
+        protected SerializerInterface $serializer
     ) {}
 
     public function consumeOrdersStatuses(InputInterface $input, OutputInterface $output): int

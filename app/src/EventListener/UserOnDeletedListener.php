@@ -5,13 +5,11 @@ namespace App\EventListener;
 use App\Event\UserOnDeletedEvent;
 use Psr\Log\LoggerInterface;
 
-class UserOnDeletedListener
+readonly class UserOnDeletedListener
 {
     public function __construct(
-        readonly private LoggerInterface $logger
-    ) {
-        // Do nothing!
-    }
+        private LoggerInterface $logger
+    ) {}
 
     public function __invoke(UserOnDeletedEvent $event): void
     {

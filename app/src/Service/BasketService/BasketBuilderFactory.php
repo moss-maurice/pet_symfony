@@ -12,7 +12,7 @@ use App\Event\BasketOnUpdatedEvent;
 use App\Service\BasketService\AbstractFactory;
 use App\Service\BasketService\Interface\BasketFactoryInterface;
 
-final class BasketBuilderFactory extends AbstractFactory implements BasketFactoryInterface
+readonly final class BasketBuilderFactory extends AbstractFactory implements BasketFactoryInterface
 {
     public function list(User $user): array
     {

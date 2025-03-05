@@ -5,13 +5,11 @@ namespace App\EventListener;
 use App\Event\BasketOnDeletedEvent;
 use Psr\Log\LoggerInterface;
 
-class BasketOnDeletedListener
+readonly class BasketOnDeletedListener
 {
     public function __construct(
-        readonly private LoggerInterface $logger
-    ) {
-        // Do nothing!
-    }
+        private LoggerInterface $logger
+    ) {}
 
     public function __invoke(BasketOnDeletedEvent $event): void
     {

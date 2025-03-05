@@ -4,10 +4,7 @@ namespace App\Response;
 
 class ErrorResponse
 {
-    public function __construct(private string $message, private mixed $details = null)
-    {
-        // Do nothing!
-    }
+    public function __construct(private string $message, private mixed $details = null) {}
 
     public function getMessage(): string
     {
@@ -18,5 +15,4 @@ class ErrorResponse
     {
         return $this->details;
     }
-
 }

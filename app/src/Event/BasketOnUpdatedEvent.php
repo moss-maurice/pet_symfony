@@ -12,10 +12,8 @@ class BasketOnUpdatedEvent extends Event
     public const NAME = 'basket.updated';
 
     public function __construct(
-        private readonly Basket $basketItem
-    ) {
-        // Do nothing!
-    }
+        readonly private Basket $basketItem
+    ) {}
 
     public function getUser(): User
     {

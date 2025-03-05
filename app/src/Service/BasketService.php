@@ -19,16 +19,16 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-final class BasketService
+readonly final class BasketService
 {
     protected BasketBuilderFactory $factory;
 
     public function __construct(
-        readonly protected BasketRepository $basketRepository,
-        readonly protected ProductService $productService,
-        readonly protected ParameterBagInterface $parameterBag,
-        readonly protected SerializerInterface $serializer,
-        readonly protected EventDispatcherInterface $eventDispatcher
+        protected BasketRepository $basketRepository,
+        protected ProductService $productService,
+        protected ParameterBagInterface $parameterBag,
+        protected SerializerInterface $serializer,
+        protected EventDispatcherInterface $eventDispatcher
     ) {
         $this->factory = new BasketBuilderFactory($this->basketRepository, $this->parameterBag, $this->eventDispatcher);
     }

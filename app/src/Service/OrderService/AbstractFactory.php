@@ -7,12 +7,12 @@ use App\Repository\OrderRepository;
 use App\Repository\OrderStatusRepository;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-abstract class AbstractFactory
+readonly abstract class AbstractFactory
 {
     public function __construct(
-        readonly protected OrderRepository $orderRepository,
-        readonly protected OrderStatusRepository $orderStatusRepository,
-        readonly protected OrderProductRepository $orderProductRepository,
-        readonly protected EventDispatcherInterface $eventDispatcher
+        protected OrderRepository $orderRepository,
+        protected OrderStatusRepository $orderStatusRepository,
+        protected OrderProductRepository $orderProductRepository,
+        protected EventDispatcherInterface $eventDispatcher
     ) {}
 }

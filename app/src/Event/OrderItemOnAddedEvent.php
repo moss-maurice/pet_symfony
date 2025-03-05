@@ -12,10 +12,8 @@ class OrderItemOnAddedEvent extends Event
     public const NAME = 'orderItem.added';
 
     public function __construct(
-        private readonly OrderProduct $orderProduct
-    ) {
-        // Do nothing!
-    }
+        readonly private OrderProduct $orderProduct
+    ) {}
 
     public function getId(): int
     {

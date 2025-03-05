@@ -10,10 +10,8 @@ class BasketOnDropedEvent extends Event
     public const NAME = 'basket.droped';
 
     public function __construct(
-        private readonly User $user
-    ) {
-        // Do nothing!
-    }
+        readonly private User $user
+    ) {}
 
     public function getUser(): User
     {

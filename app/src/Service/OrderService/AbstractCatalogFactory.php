@@ -6,10 +6,10 @@ use App\Repository\OrderShipmentMethodRepository;
 use App\Repository\OrderStatusRepository;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-abstract class AbstractCatalogFactory
+readonly abstract class AbstractCatalogFactory
 {
     public function __construct(
-        readonly protected OrderShipmentMethodRepository $orderShipmentMethodusRepository,
-        readonly protected OrderStatusRepository $orderStatusRepository
+        protected OrderShipmentMethodRepository $orderShipmentMethodusRepository,
+        protected OrderStatusRepository $orderStatusRepository
     ) {}
 }

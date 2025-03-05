@@ -7,15 +7,13 @@ use App\Service\KafkaService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
-class UserOnRegisteredListener
+readonly class UserOnRegisteredListener
 {
     public function __construct(
-        readonly private LoggerInterface $logger,
-        readonly private KafkaService $kafkaService,
-        readonly private ParameterBagInterface $parameterBag
-    ) {
-        // Do nothing!
-    }
+        private LoggerInterface $logger,
+        private KafkaService $kafkaService,
+        private ParameterBagInterface $parameterBag
+    ) {}
 
     public function __invoke(UserOnRegisteredEvent $event): void
     {

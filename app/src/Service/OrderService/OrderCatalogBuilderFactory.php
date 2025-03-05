@@ -7,7 +7,7 @@ use App\Entity\OrderStatus;
 use App\Service\OrderService\AbstractCatalogFactory;
 use App\Service\OrderService\Interface\OrderCatalogFactoryInterface;
 
-final class OrderCatalogBuilderFactory extends AbstractCatalogFactory implements OrderCatalogFactoryInterface
+readonly final class OrderCatalogBuilderFactory extends AbstractCatalogFactory implements OrderCatalogFactoryInterface
 {
     public function shipmentsMethodsList(): array
     {

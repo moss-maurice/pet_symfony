@@ -16,16 +16,14 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class OnExceptionListener
+readonly class OnExceptionListener
 {
     public function __construct(
         private ExceptionMappingResolver $resolver,
         private LoggerInterface $logger,
         private SerializerInterface $serializer,
         private bool $isDebug
-    ) {
-        // Do nothing!
-    }
+    ) {}
 
     public function __invoke(ExceptionEvent $event): void
     {

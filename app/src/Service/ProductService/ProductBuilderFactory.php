@@ -7,7 +7,7 @@ use App\Event\ProductOnCreatedEvent;
 use App\Service\ProductService\AbstractFactory;
 use App\Service\ProductService\Interface\ProductFactoryInterface;
 
-final class ProductBuilderFactory extends AbstractFactory implements ProductFactoryInterface
+readonly final class ProductBuilderFactory extends AbstractFactory implements ProductFactoryInterface
 {
     public function build(string $json): Product
     {

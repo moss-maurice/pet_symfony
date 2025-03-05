@@ -5,13 +5,11 @@ namespace App\EventListener;
 use App\Event\BasketOnDropedEvent;
 use Psr\Log\LoggerInterface;
 
-class BasketOnDropedListener
+readonly class BasketOnDropedListener
 {
     public function __construct(
-        readonly private LoggerInterface $logger
-    ) {
-        // Do nothing!
-    }
+        private LoggerInterface $logger
+    ) {}
 
     public function __invoke(BasketOnDropedEvent $event): void
     {

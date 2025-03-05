@@ -22,30 +22,30 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-final class OrderService
+readonly final class OrderService
 {
     protected OrderBuilderFactory $factory;
     protected OrderCatalogBuilderFactory $catalogFactory;
 
     public function __construct(
-        readonly protected OrderRepository $orderRepository,
-        readonly protected OrderStatusRepository $orderStatusRepository,
-        readonly protected OrderProductRepository $orderProductRepository,
-        readonly protected OrderShipmentMethodRepository $orderShipmentMethodRepository,
-        readonly protected BasketService $basketService,
-        readonly protected SerializerInterface $serializer,
-        readonly protected EventDispatcherInterface $eventDispatcher
+        protected OrderRepository $orderRepository,
+        protected OrderStatusRepository $orderStatusRepository,
+        protected OrderProductRepository $orderProductRepository,
+        protected OrderShipmentMethodRepository $orderShipmentMethodRepository,
+        protected BasketService $basketService,
+        protected SerializerInterface $serializer,
+        protected EventDispatcherInterface $eventDispatcher
     ) {
         $this->factory = new OrderBuilderFactory($this->orderRepository, $this->orderStatusRepository, $this->orderProductRepository, $this->eventDispatcher);
         $this->catalogFactory = new OrderCatalogBuilderFactory($this->orderShipmentMethodRepository, $this->orderStatusRepository);
     }
 
-    public function factory()
+    public function factory(): OrderBuilderFactory
     {
         return $this->factory;
     }
 
-    public function catalogFactory()
+    public function catalogFactory(): OrderCatalogBuilderFactory
     {
         return $this->catalogFactory;
     }

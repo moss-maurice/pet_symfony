@@ -18,9 +18,7 @@ class RequestBodyArgumentResolver implements ValueResolverInterface
     public function __construct(
         private readonly SerializerInterface $serializer,
         private readonly ValidatorInterface $validator
-    ) {
-        // Do nothing!
-    }
+    ) {}
 
     public function resolve(Request $request, ArgumentMetadata $argument): iterable
     {

@@ -11,9 +11,6 @@ use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 
-/**
- * @extends ServiceEntityRepository<User>
- */
 class UserRepository extends ServiceEntityRepository implements PasswordUpgraderInterface
 {
     protected $passwordHasher;
@@ -28,9 +25,6 @@ class UserRepository extends ServiceEntityRepository implements PasswordUpgrader
         $this->entityManager = $this->getEntityManager();
     }
 
-    /**
-     * Used to upgrade (rehash) the user's password automatically over time.
-     */
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $password): void
     {
         if (!$user instanceof User) {

@@ -12,13 +12,16 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Component\Validator\ConstraintViolationListInterface;
 
-class OnValidationExceptionListener
+readonly class OnValidationExceptionListener
 {
-    public function __construct(private SerializerInterface $serializer) {}
+    public function __construct(
+        private SerializerInterface $serializer
+    ) {}
 
     public function __invoke(ExceptionEvent $event): void
     {
         $throwable = $event->getThrowable();
+
         if (!($throwable instanceof ValidationException)) {
             return;
         }

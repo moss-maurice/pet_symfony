@@ -4,9 +4,7 @@ namespace App\Response;
 
 class ErrorValidationDetailsItem
 {
-    public function __construct(private string $field,private string $message)
-    {
-    }
+    public function __construct(private string $field, private string $message) {}
 
     public function getField(): string
     {
@@ -17,6 +15,4 @@ class ErrorValidationDetailsItem
     {
         return $this->message;
     }
-
-
 }

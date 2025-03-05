@@ -13,10 +13,8 @@ class OrderOnCreatedEvent extends Event
     public const NAME = 'order.created';
 
     public function __construct(
-        private readonly Order $order
-    ) {
-        // Do nothing!
-    }
+        readonly private Order $order
+    ) {}
 
     public function getId(): int
     {

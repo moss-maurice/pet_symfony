@@ -14,16 +14,16 @@ use Symfony\Component\Serializer\Encoder\JsonEncoder;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-final class ProductService
+readonly final class ProductService
 {
     protected string $data;
     protected ProductBuilderFactory $factory;
 
     public function __construct(
-        readonly protected ProductRepository $productRepository,
-        readonly protected EntityManagerInterface $entityManager,
-        readonly protected SerializerInterface $serializer,
-        readonly protected EventDispatcherInterface $eventDispatcher
+        protected ProductRepository $productRepository,
+        protected EntityManagerInterface $entityManager,
+        protected SerializerInterface $serializer,
+        protected EventDispatcherInterface $eventDispatcher
     ) {
         $this->factory = new ProductBuilderFactory($this->productRepository, $this->entityManager, $this->serializer, $this->eventDispatcher);
     }

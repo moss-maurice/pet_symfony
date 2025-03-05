@@ -10,10 +10,8 @@ class UserOnDeletedEvent extends Event
     public const NAME = 'user.deleted';
 
     public function __construct(
-        private readonly User $user
-    ) {
-        // Do nothing!
-    }
+        readonly private User $user
+    ) {}
 
     public function getUser(): User
     {

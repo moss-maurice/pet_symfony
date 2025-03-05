@@ -8,12 +8,13 @@ use App\Service\Kafka\Strategy\ConsumerStrategy;
 use App\Service\Kafka\Strategy\ProducerStrategy;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
-final class Factory
+readonly final class Factory
 {
     protected Config $config;
 
-    public function __construct(readonly private ParameterBagInterface $parameterBag)
-    {
+    public function __construct(
+        private ParameterBagInterface $parameterBag
+    ) {
         $this->config = new Config;
 
         $this->config

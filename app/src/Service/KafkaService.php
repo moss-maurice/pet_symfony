@@ -7,12 +7,12 @@ use App\Service\Kafka\Strategy\ConsumerStrategy;
 use App\Service\Kafka\Strategy\ProducerStrategy;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
-final class KafkaService
+readonly final class KafkaService
 {
     protected Factory $factory;
 
     public function __construct(
-        readonly protected ParameterBagInterface $parameterBag
+        protected ParameterBagInterface $parameterBag
     ) {
         $this->factory = new Factory($this->parameterBag);
     }

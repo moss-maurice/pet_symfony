@@ -5,13 +5,11 @@ namespace App\EventListener;
 use App\Event\OrderItemOnAddedEvent;
 use Psr\Log\LoggerInterface;
 
-class OrderItemOnAddedListener
+readonly class OrderItemOnAddedListener
 {
     public function __construct(
-        readonly private LoggerInterface $logger
-    ) {
-        // Do nothing!
-    }
+        private LoggerInterface $logger
+    ) {}
 
     public function __invoke(OrderItemOnAddedEvent $event): void
     {

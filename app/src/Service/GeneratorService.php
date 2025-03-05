@@ -6,12 +6,12 @@ use App\Entity\Product;
 use App\Service\Generator\ProductFactory;
 use Doctrine\Common\Collections\ArrayCollection;
 
-final class GeneratorService
+readonly final class GeneratorService
 {
     protected ProductFactory $factory;
 
     public function __construct(
-        readonly protected FakerService $faker
+        protected FakerService $faker
     ) {
         $this->factory = new ProductFactory($this->faker);
     }

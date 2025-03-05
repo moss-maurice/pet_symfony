@@ -14,7 +14,7 @@ use App\Event\OrderOnUpdatedEvent;
 use App\Service\OrderService\AbstractFactory;
 use App\Service\OrderService\Interface\OrderFactoryInterface;
 
-final class OrderBuilderFactory extends AbstractFactory implements OrderFactoryInterface
+readonly final class OrderBuilderFactory extends AbstractFactory implements OrderFactoryInterface
 {
     public function list(User $user, $page = 1, $limit = 10): array
     {

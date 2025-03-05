@@ -11,14 +11,14 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-final class UserService
+readonly final class UserService
 {
     readonly protected UserFactory $factory;
 
     public function __construct(
-        readonly protected UserRepository $userRepository,
-        readonly protected TokenStorageInterface $tokenStorage,
-        readonly protected EventDispatcherInterface $eventDispatcher
+        protected UserRepository $userRepository,
+        protected TokenStorageInterface $tokenStorage,
+        protected EventDispatcherInterface $eventDispatcher
     ) {
         $this->factory = new UserFactory($this->userRepository, $this->tokenStorage, $this->eventDispatcher);
     }

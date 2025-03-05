@@ -4,10 +4,7 @@ namespace App\Response;
 
 class ErrorWoutDetailsResponse
 {
-    public function __construct(private string $message)
-    {
-        // Do nothing!
-    }
+    public function __construct(private string $message) {}
 
     public function getMessage(): string
     {
