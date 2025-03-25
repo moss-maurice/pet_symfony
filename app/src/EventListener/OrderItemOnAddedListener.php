@@ -13,10 +13,8 @@ readonly class OrderItemOnAddedListener
 
     public function __invoke(OrderItemOnAddedEvent $event): void
     {
-        $id = $event->getId();
-        $order = $event->getOrder();
         $product = $event->getProduct();
 
-        $this->logger->info("Added product '{$product->getName()}' ({$product->getId()}) to order id $id.");
+        $this->logger->info("Added product '{$product->getName()}' to order.");
     }
 }

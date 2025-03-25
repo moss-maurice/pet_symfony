@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Service\ConsoleService;
+use App\Service\Console\ConsumeService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -19,7 +19,7 @@ class ConsumeOrdersStatusesCommand extends Command
 {
     public function __construct(
         readonly private ParameterBagInterface $parameterBag,
-        readonly private ConsoleService $consoleService
+        readonly private ConsumeService $consumeService
     ) {
         return parent::__construct();
     }
@@ -31,8 +31,11 @@ class ConsumeOrdersStatusesCommand extends Command
             ->addOption('supervisor', 's', InputOption::VALUE_NONE, 'Logs output supervisor style');
     }
 
+    /**
+     * cmd: symfony console app:consume:orders-statuses
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        return $this->consoleService->consumeOrdersStatuses($input, $output);
+        return $this->consumeService->consumeOrdersStatuses($input, $output);
     }
 }

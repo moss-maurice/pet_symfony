@@ -102,48 +102,105 @@ services:
         tags:
             - { name: "kernel.event_listener", event: "order.updated" }
 
+    App\Service\BasketService:
+        arguments:
+            $repository: '@App\Repository\BasketRepository'
+            $parameterBag: "@parameter_bag"
+            $entityManager: "@doctrine.orm.entity_manager"
+            $eventDispatcher: "@event_dispatcher"
+
     App\Service\KafkaService:
         arguments:
             $parameterBag: "@parameter_bag"
 
-    App\Service\GeneratorService:
+    App\Service\OrderService:
         arguments:
-            $faker: '@App\Service\FakerService'
+            $orderRepository: '@App\Repository\OrderRepository'
+            $orderProductRepository: '@App\Repository\OrderProductRepository'
+            $orderStatusRepository: '@App\Repository\OrderStatusRepository'
+            $entityManager: "@doctrine.orm.entity_manager"
+            $eventDispatcher: "@event_dispatcher"
+
+    App\Service\OrderShipmentMethodService:
+        arguments:
+            $repository: '@App\Repository\OrderShipmentMethodRepository'
+
+    App\Service\OrderStatusService:
+        arguments:
+            $repository: '@App\Repository\OrderStatusRepository'
 
     App\Service\ProductService:
         arguments:
+            $repository: '@App\Repository\ProductRepository'
+            $fakerService: '@App\Service\FakerService'
             $entityManager: "@doctrine.orm.entity_manager"
             $serializer: "@serializer"
+            $eventDispatcher: "@event_dispatcher"
 
     App\Service\UserService:
         arguments:
-            $userRepository: '@App\Repository\UserRepository'
+            $repository: '@App\Repository\UserRepository'
+            $tokenStorage: "@security.token_storage"
+            $passwordHasher: "@security.user_password_hasher"
+            $entityManager: "@doctrine.orm.entity_manager"
             $eventDispatcher: "@event_dispatcher"
 
-    App\Service\BasketService:
+    App\Service\Http\BasketHttpService:
         arguments:
-            $basketRepository: '@App\Repository\BasketRepository'
+            $service: '@App\Service\BasketService'
+            $productService: '@App\Service\ProductService'
             $parameterBag: "@parameter_bag"
             $serializer: "@serializer"
             $eventDispatcher: "@event_dispatcher"
 
-    App\Service\OrderService:
+    App\Service\Http\OrderHttpService:
         arguments:
-            $orderRepository: '@App\Repository\OrderRepository'
-            $orderStatusRepository: '@App\Repository\OrderStatusRepository'
-            $orderProductRepository: '@App\Repository\OrderProductRepository'
-            $orderShipmentMethodRepository: '@App\Repository\OrderShipmentMethodRepository'
+            $service: '@App\Service\OrderService'
+            $basketService: '@App\Service\BasketService'
+            $orderShipmentMethodService: '@App\Service\OrderShipmentMethodService'
+            $orderStatusService: '@App\Service\OrderStatusService'
             $serializer: "@serializer"
             $eventDispatcher: "@event_dispatcher"
 
-    App\Service\ConsoleService:
+    App\Service\Http\OrderShipmentMethodHttpService:
+        arguments:
+            $service: '@App\Service\OrderShipmentMethodService'
+            $serializer: "@serializer"
+
+    App\Service\Http\OrderStatusHttpService:
+        arguments:
+            $service: '@App\Service\OrderStatusService'
+            $serializer: "@serializer"
+
+    App\Service\Http\ProductHttpService:
+        arguments:
+            $service: '@App\Service\ProductService'
+            $serializer: "@serializer"
+
+    App\Service\Http\UserHttpService:
+        arguments:
+            $service: '@App\Service\UserService'
+            $eventDispatcher: "@event_dispatcher"
+
+    App\Service\Console\ConsumeService:
         arguments:
             $kafkaService: '@App\Service\KafkaService'
             $orderService: '@App\Service\OrderService'
+            $orderStatusService: '@App\Service\OrderStatusService'
             $productService: '@App\Service\ProductService'
-            $generatorService: '@App\Service\GeneratorService'
-            $userService: '@App\Service\UserService'
             $serializer: "@serializer"
+
+    App\Service\Console\ProduceService:
+        arguments:
+            $kafkaService: '@App\Service\KafkaService'
+            $productService: '@App\Service\ProductService'
+            $serializer: "@serializer"
+
+    App\Service\Console\UsersService:
+        arguments:
+            $orderService: '@App\Service\OrderService'
+            $orderShipmentMethodService: '@App\Service\OrderShipmentMethodService'
+            $userService: '@App\Service\UserService'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -3,7 +3,7 @@
 namespace App\Command;
 
 use App\Entity\OrderStatus;
-use App\Service\ConsoleService;
+use App\Service\Console\ProduceService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -20,7 +20,7 @@ class SeedingOrdersStatusesCommand extends Command
 {
     public function __construct(
         readonly private ParameterBagInterface $parameterBag,
-        readonly private ConsoleService $consoleService
+        readonly private ProduceService $produceService
     ) {
         return parent::__construct();
     }
@@ -33,8 +33,11 @@ class SeedingOrdersStatusesCommand extends Command
             ->addOption('status', 's', InputOption::VALUE_OPTIONAL, 'Status id', OrderStatus::DEFAULT_ID);
     }
 
+    /**
+     * cmd: symfony console app:seeding:orders-statuses --order=1 --status=2
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        return $this->consoleService->produceOrdersStatus($input, $output);
+        return $this->produceService->produceOrdersStatus($input, $output);
     }
 }

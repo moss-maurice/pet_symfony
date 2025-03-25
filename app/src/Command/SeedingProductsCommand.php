@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Service\ConsoleService;
+use App\Service\Console\ProduceService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -19,7 +19,7 @@ class SeedingProductsCommand extends Command
 {
     public function __construct(
         readonly private ParameterBagInterface $parameterBag,
-        readonly private ConsoleService $consoleService
+        readonly private ProduceService $produceService
     ) {
         return parent::__construct();
     }
@@ -31,8 +31,11 @@ class SeedingProductsCommand extends Command
             ->addOption('count', 'c', InputOption::VALUE_OPTIONAL, 'Count of messages', 1);
     }
 
+    /**
+     * cmd: symfony console app:consume:products
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        return $this->consoleService->produceProducts($input, $output);
+        return $this->produceService->produceProducts($input, $output);
     }
 }

@@ -2,151 +2,128 @@
 
 namespace App\Service;
 
+use App\Entity\Basket;
+use App\Entity\Order;
+use App\Entity\OrderProduct;
+use App\Entity\OrderShipmentMethod;
+use App\Entity\OrderStatus;
 use App\Entity\User;
-use App\Exception\EmptyBasketException;
-use App\Exception\OrderNotFoundException;
-use App\Exception\ShipmentMethodNotFoundException;
-use App\Exception\StatusNotFoundException;
+use App\Event\OrderItemOnAddedEvent;
+use App\Event\OrderOnCreatedEvent;
+use App\Event\OrderOnUpdatedEvent;
 use App\Repository\OrderProductRepository;
 use App\Repository\OrderRepository;
-use App\Repository\OrderShipmentMethodRepository;
 use App\Repository\OrderStatusRepository;
-use App\Request\CreateOrderRequest;
-use App\Request\PaginationRequest;
-use App\Request\UpdateOrderRequest;
-use App\Service\BasketService;
-use App\Service\OrderService\OrderBuilderFactory;
-use App\Service\OrderService\OrderCatalogBuilderFactory;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\SerializerInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 readonly final class OrderService
 {
-    protected OrderBuilderFactory $factory;
-    protected OrderCatalogBuilderFactory $catalogFactory;
-
     public function __construct(
         protected OrderRepository $orderRepository,
-        protected OrderStatusRepository $orderStatusRepository,
         protected OrderProductRepository $orderProductRepository,
-        protected OrderShipmentMethodRepository $orderShipmentMethodRepository,
-        protected BasketService $basketService,
-        protected SerializerInterface $serializer,
+        protected OrderStatusRepository $orderStatusRepository,
+        protected EntityManagerInterface $entityManager,
         protected EventDispatcherInterface $eventDispatcher
-    ) {
-        $this->factory = new OrderBuilderFactory($this->orderRepository, $this->orderStatusRepository, $this->orderProductRepository, $this->eventDispatcher);
-        $this->catalogFactory = new OrderCatalogBuilderFactory($this->orderShipmentMethodRepository, $this->orderStatusRepository);
+    ) {}
+
+    public function list(User $user, $page = 1, $limit = 10): array
+    {
+        return $this->orderRepository->getOrderList($user, $page, $limit);
     }
 
-    public function factory(): OrderBuilderFactory
+    public function count(User $user): int
     {
-        return $this->factory;
+        return $this->orderRepository->getOrdersCount($user);
     }
 
-    public function catalogFactory(): OrderCatalogBuilderFactory
+    public function item(User $user, int $id): ?Order
     {
-        return $this->catalogFactory;
+        return $this->orderRepository->getOrderItem($user, $id);
     }
 
-    public function getOrderList(User $user, PaginationRequest $request): JsonResponse
+    public function itemById(int $id): ?Order
     {
-        $orders = $this->factory->list($user, $request->getPage(), $request->getLimit());
-
-        return new JsonResponse([
-            'items' => $this->serializer->normalize($orders, JsonEncoder::FORMAT, [
-                'groups' => ['order'],
-            ]),
-            'total' => $this->factory->count($user),
-            'page' => $request->getPage(),
-            'limit' => $request->getLimit(),
-        ], JsonResponse::HTTP_OK);
+        return $this->orderRepository->getOrderItemById($id);
     }
 
-    public function createOrder(User $user, CreateOrderRequest $request): JsonResponse
+    public function create(User $user, string $phone, OrderShipmentMethod $shipmentMethod): ?Order
     {
-        $basket = $this->basketService->factory()->list($user);
+        $order = $this->createOrder($user, $phone, $shipmentMethod);
 
-        if (empty($basket)) {
-            throw new EmptyBasketException;
+        if ($order) {
+            $this->eventDispatcher->dispatch(new OrderOnCreatedEvent($order), OrderOnCreatedEvent::NAME);
         }
 
-        $shipmentMethod = $this->orderShipmentMethodRepository->item($request->getShipmentMethod());
-
-        if (empty($shipmentMethod)) {
-            throw new ShipmentMethodNotFoundException;
-        }
-
-        $order = $this->factory->create($user, $request->getPhone(), $shipmentMethod);
-
-        foreach ($basket as $basketItem) {
-            $orderProduct = $this->factory->addProduct($order, $basketItem);
-
-            if ($orderProduct) {
-                $this->basketService->factory()->delete($user, $basketItem);
-            }
-        }
-
-        return new JsonResponse([
-            'message' => "Order successfully created",
-            'id' => $order->getId(),
-        ], JsonResponse::HTTP_OK);
+        return $order;
     }
 
-    public function getOrder(User $user, int $id): JsonResponse
+    public function addProduct(Order $order, Basket $basketItem): OrderProduct
     {
-        $order = $this->factory->get($user, $id);
+        $orderItem = $this->addOrderItem($order, $basketItem);
 
-        if (!$order) {
-            throw new OrderNotFoundException;
+        if ($orderItem) {
+            $this->eventDispatcher->dispatch(new OrderItemOnAddedEvent($orderItem), OrderItemOnAddedEvent::NAME);
         }
 
-        return new JsonResponse($this->serializer->normalize($order, JsonEncoder::FORMAT, [
-            'groups' => ['order'],
-        ]), JsonResponse::HTTP_OK);
+        return $orderItem;
     }
 
-    public function updateOrder(User $user, int $id, UpdateOrderRequest $request): JsonResponse
+    public function updateStatus(Order $order, OrderStatus $status): Order
     {
-        $order = $this->factory->get($user, $id);
+        $order = $this->updateOrderStatus($order, $status);
 
-        if (!$order) {
-            throw new OrderNotFoundException;
+        if ($order) {
+            $this->eventDispatcher->dispatch(new OrderOnUpdatedEvent($order), OrderOnUpdatedEvent::NAME);
         }
 
-        $status = $this->orderStatusRepository->item($request->getStatus());
+        return $order;
+    }
 
-        if (empty($status)) {
-            throw new StatusNotFoundException;
+    protected function createOrder(User $user, string $phone, OrderShipmentMethod $shipmentMethod, OrderStatus $status = null): ?Order
+    {
+        if (is_null($status)) {
+            $status = $this->orderStatusRepository->find(OrderStatus::DEFAULT_ID);
         }
 
-        $this->factory->updateStatus($order, $status);
+        $order = new Order();
 
-        return new JsonResponse([
-            'message' => "Order successfully updated",
-        ], JsonResponse::HTTP_OK);
+        $order->setUser($user);
+        $order->setPhone($phone);
+        $order->setShipmentMethod($shipmentMethod);
+        $order->setStatus($status);
+
+        $this->entityManager->persist($order);
+
+        return $order;
     }
 
-    public function getStatusesList(): JsonResponse
+    protected function addOrderItem(Order $order, Basket $basketItem): ?OrderProduct
     {
-        $list = $this->catalogFactory->statusesList();
+        $orderItem = new OrderProduct();
 
-        return new JsonResponse([
-            'items' => $this->serializer->normalize($list, JsonEncoder::FORMAT, [
-                'groups' => ['catalog'],
-            ]),
-        ], JsonResponse::HTTP_OK);
+        $orderItem->setOrder($order);
+        $orderItem->setProduct($basketItem->getProduct());
+        $orderItem->setAmount($basketItem->getAmount());
+        $orderItem->setCost($basketItem->getProduct()->getCost());
+        $orderItem->setTax($basketItem->getProduct()->getTax());
+
+        $this->entityManager->persist($orderItem);
+
+        return $orderItem;
     }
 
-    public function getShipmentMethodsList(): JsonResponse
+    protected function updateOrderStatus(Order $order, OrderStatus $status): Order
     {
-        $list = $this->catalogFactory->shipmentsMethodsList();
+        $order->setStatus($status);
 
-        return new JsonResponse([
-            'items' => $this->serializer->normalize($list, JsonEncoder::FORMAT, [
-                'groups' => ['catalog'],
-            ]),
-        ], JsonResponse::HTTP_OK);
+        $this->entityManager->persist($order);
+
+        return $order;
+    }
+
+    public function execute(): void
+    {
+        $this->entityManager->flush();
     }
 }

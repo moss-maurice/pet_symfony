@@ -13,9 +13,8 @@ readonly class OrderOnCreatedListener
 
     public function __invoke(OrderOnCreatedEvent $event): void
     {
-        $id = $event->getId();
         $user = $event->getUser();
 
-        $this->logger->info("Created order id $id for user: {$user->getEmail()}.");
+        $this->logger->info("Created order for user: {$user->getEmail()}.");
     }
 }

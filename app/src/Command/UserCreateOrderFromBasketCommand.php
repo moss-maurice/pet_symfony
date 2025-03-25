@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Service\ConsoleService;
+use App\Service\Console\UsersService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -16,7 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class UserCreateOrderFromBasketCommand extends Command
 {
     public function __construct(
-        readonly private ConsoleService $consoleService
+        readonly private UsersService $usersService
     ) {
         return parent::__construct();
     }
@@ -29,8 +29,11 @@ class UserCreateOrderFromBasketCommand extends Command
             ->addArgument('shipmentMethod', InputArgument::REQUIRED, 'Shipment method id');
     }
 
+    /**
+     * cmd: symfony console app:user:create-order-from-basket --user=1 --phone=+79876543210 --shipmentMethod=1
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        return $this->consoleService->userCreateOrderFromBasket($input, $output);
+        return $this->usersService->userCreateOrderFromBasket($input, $output);
     }
 }

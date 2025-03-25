@@ -3,8 +3,8 @@
 namespace App\Controller\Api;
 
 use App\Attribute\RequestBody;
+use App\Service\Http\UserHttpService;
 use App\Request\UserRegisterRequest;
-use App\Service\UserService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -13,18 +13,18 @@ use Symfony\Component\Routing\Annotation\Route;
 class AuthController extends AbstractController
 {
     public function __construct(
-        readonly protected UserService $userService,
+        readonly protected UserHttpService $service,
     ) {}
 
     #[Route('/register', name: 'register', methods: ['POST'])]
     public function register(#[RequestBody] UserRegisterRequest $request): JsonResponse
     {
-        return $this->userService->registerUser($request);
+        return $this->service->registerUser($request);
     }
 
     #[Route('/logged', name: 'logged', methods: ['POST'])]
     public function logged(): JsonResponse
     {
-        return $this->userService->isLoggedUser();
+        return $this->service->isLoggedUser();
     }
 }

@@ -2,127 +2,146 @@
 
 namespace App\Service;
 
+use App\Entity\Basket;
+use App\Entity\Product;
 use App\Entity\User;
-use App\Exception\BasketItemNotFoundException;
-use App\Exception\BasketProductAlreadyExistsException;
-use App\Exception\BasketProductNotFoundException;
-use App\Exception\BasketProductsLimitReachedException;
-use App\Exception\ProductNotFountException;
+use App\Event\BasketOnAddedEvent;
+use App\Event\BasketOnDeletedEvent;
+use App\Event\BasketOnDropedEvent;
+use App\Event\BasketOnUpdatedEvent;
 use App\Repository\BasketRepository;
-use App\Request\AddProductRequest;
-use App\Request\UpdateProductAmountRequest;
-use App\Service\BasketService\BasketBuilderFactory;
-use App\Service\ProductService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
-use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 readonly final class BasketService
 {
-    protected BasketBuilderFactory $factory;
-
     public function __construct(
-        protected BasketRepository $basketRepository,
-        protected ProductService $productService,
+        protected BasketRepository $repository,
         protected ParameterBagInterface $parameterBag,
-        protected SerializerInterface $serializer,
+        protected EntityManagerInterface $entityManager,
         protected EventDispatcherInterface $eventDispatcher
-    ) {
-        $this->factory = new BasketBuilderFactory($this->basketRepository, $this->parameterBag, $this->eventDispatcher);
+    ) {}
+
+    public function list(User $user): array
+    {
+        return $this->repository->getBasketList($user);
     }
 
-    public function factory()
+    public function item(User $user, int $id): ?Basket
     {
-        return $this->factory;
+        return $this->repository->getBasketItem($user, $id);
     }
 
-    public function getBasketList(User $user): JsonResponse
+    public function find(User $user, Product $product): ?Basket
     {
-        $basket = $this->factory->list($user);
-
-        return new JsonResponse([
-            'items' => $this->serializer->normalize($basket, JsonEncoder::FORMAT, [
-                'groups' => ['basket'],
-            ]),
-        ], JsonResponse::HTTP_OK);
+        return $this->repository->findBasketItem($user, $product);
     }
 
-    public function addBasketItem(User $user, AddProductRequest $request): JsonResponse
+    public function has(User $user, int $id): bool
     {
-        $product = $this->productService->factory()->get($request->getProduct());
-
-        if (!$product) {
-            throw new ProductNotFountException;
-        }
-
-        if (!$this->factory->canAdd($user)) {
-            throw new BasketProductsLimitReachedException;
-        }
-
-        if ($basketItem = $this->factory->find($user, $product)) {
-            throw new BasketProductAlreadyExistsException;
-        }
-
-        $basketItem = $this->factory->add($user, $product, $request->getAmount());
-
-        return new JsonResponse([
-            'message' => "Basket item successfully added",
-            'id' => $basketItem->getId(),
-        ], JsonResponse::HTTP_OK);
+        return $this->repository->hasBasketItem($user, $id);
     }
 
-    public function dropBasket(User $user): JsonResponse
+    public function canAdd(User $user): bool
     {
-        $this->factory->drop($user);
-
-        return new JsonResponse([
-            'message' => "Basket successfully droped",
-        ], JsonResponse::HTTP_OK);
+        return $this->repository->getCarItemsCount($user) < $this->parameterBag->get('app.basketProductsLimit');
     }
 
-    public function hasBasketProduct(User $user, int $id): JsonResponse
+    public function add(User $user, Product $product, int $amount): ?Basket
     {
-        $product = $this->productService->factory()->get($id);
+        $basketItem = $this->addBasketItem($user, $product, $amount);
 
-        if (!$product) {
-            throw new ProductNotFountException;
+        if ($basketItem) {
+            $this->eventDispatcher->dispatch(new BasketOnAddedEvent($basketItem), BasketOnAddedEvent::NAME);
         }
 
-        if (!($basketItem = $this->factory->find($user, $product))) {
-            throw new BasketProductNotFoundException;
-        }
-
-        return new JsonResponse([
-            'message' => "Product found",
-            'amount' => $basketItem->getAmount(),
-        ], JsonResponse::HTTP_OK);
+        return $basketItem;
     }
 
-    public function updateBasketItem(User $user, int $id, UpdateProductAmountRequest $request): JsonResponse
+    public function update(User $user, Basket $basketItem, int $amount): ?Basket
     {
-        if (!($basketItem = $this->factory->get($user, $id))) {
-            throw new BasketItemNotFoundException;
+        $basketItem = $this->updateBasketItem($user, $basketItem, $amount);
+
+        if ($basketItem) {
+            $this->eventDispatcher->dispatch(new BasketOnUpdatedEvent($basketItem), BasketOnUpdatedEvent::NAME);
         }
 
-        $this->factory->update($user, $basketItem, $request->getAmount());
-
-        return new JsonResponse([
-            'message' => "Basket item successfully updated",
-        ], JsonResponse::HTTP_OK);
+        return $basketItem;
     }
 
-    public function deleteBasketItem(User $user, int $id): JsonResponse
+    public function delete(User $user, Basket $basketItem): bool
     {
-        if (!($basketItem = $this->factory->get($user, $id))) {
-            throw new BasketItemNotFoundException;
+        if ($result = $this->deleteBasketItem($user, $basketItem)) {
+            $this->eventDispatcher->dispatch(new BasketOnDeletedEvent($basketItem), BasketOnDeletedEvent::NAME);
         }
 
-        $this->factory->delete($user, $basketItem);
+        return $result;
+    }
 
-        return new JsonResponse([
-            'message' => "Basket item successfully deleyed",
-        ], JsonResponse::HTTP_OK);
+    public function drop(User $user): bool
+    {
+        if ($result = $this->dropBasket($user)) {
+            $this->eventDispatcher->dispatch(new BasketOnDropedEvent($user), BasketOnDropedEvent::NAME);
+        }
+
+        return $result;
+    }
+
+    protected function addBasketItem(User $user, Product $product, int $amount): Basket
+    {
+        $basketItem = new Basket();
+
+        $basketItem->setUser($user);
+        $basketItem->setProduct($product);
+        $basketItem->setAmount($amount);
+
+        $this->entityManager->persist($basketItem);
+
+        return $basketItem;
+    }
+
+    protected function updateBasketItem(User $user, Basket $basketItem, int $amount): ?Basket
+    {
+        if ($basketItem->getUser() !== $user) {
+            return null;
+        }
+
+        $basketItem->setAmount($amount);
+
+        $this->entityManager->persist($basketItem);
+
+        return $basketItem;
+    }
+
+    protected function deleteBasketItem(User $user, Basket $basketItem): bool
+    {
+        if ($basketItem->getUser() !== $user) {
+            return false;
+        }
+
+        $id = $basketItem->getId();
+
+        $this->entityManager->remove($basketItem);
+
+        return !$this->repository->hasBasketItem($user, $id);
+    }
+
+    protected function dropBasket(User $user): bool
+    {
+        $list = $this->repository->getBasketList($user);
+
+        if (is_array($list) and !empty($list)) {
+            foreach ($list as $basketItem) {
+                $this->entityManager->remove($basketItem);
+            }
+        }
+
+        return $this->repository->getCarItemsCount($user) > 0 ? false : true;
+    }
+
+    public function execute(): void
+    {
+        $this->entityManager->flush();
     }
 }

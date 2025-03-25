@@ -2,7 +2,7 @@
 
 namespace App\Command;
 
-use App\Service\ConsoleService;
+use App\Service\Console\UsersService;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -16,7 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class UserRoleCommand extends Command
 {
     public function __construct(
-        readonly private ConsoleService $consoleService
+        readonly private UsersService $usersService
     ) {
         return parent::__construct();
     }
@@ -28,8 +28,11 @@ class UserRoleCommand extends Command
             ->addArgument('role', InputArgument::REQUIRED, 'User role');
     }
 
+    /**
+     * cmd: symfony console app:user:create-order-from-basket --user=1 --role=admin
+     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        return $this->consoleService->userRoleGrants($input, $output);
+        return $this->usersService->userRoleGrants($input, $output);
     }
 }

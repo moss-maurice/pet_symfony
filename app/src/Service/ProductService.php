@@ -3,71 +3,124 @@
 namespace App\Service;
 
 use App\Entity\Product;
+use App\Entity\ProductMeasurement;
+use App\Event\ProductOnCreatedEvent;
 use App\Exception\InvalidJsonException;
-use App\Exception\ProductNotFountException;
 use App\Repository\ProductRepository;
-use App\Request\PaginationRequest;
-use App\Service\ProductService\ProductBuilderFactory;
+use App\Service\FakerService;
+use Carbon\Carbon;
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\Serializer\Encoder\JsonEncoder;
+use Faker\Generator;
 use Symfony\Component\Serializer\SerializerInterface;
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
 readonly final class ProductService
 {
-    protected string $data;
-    protected ProductBuilderFactory $factory;
+    readonly protected Generator $faker;
 
     public function __construct(
-        protected ProductRepository $productRepository,
+        protected ProductRepository $repository,
+        protected FakerService $fakerService,
         protected EntityManagerInterface $entityManager,
         protected SerializerInterface $serializer,
         protected EventDispatcherInterface $eventDispatcher
     ) {
-        $this->factory = new ProductBuilderFactory($this->productRepository, $this->entityManager, $this->serializer, $this->eventDispatcher);
+        $this->faker = $fakerService->generator();
     }
 
-    public function factory()
+    public function build(string $json): Product
     {
-        return $this->factory;
+        $product = $this->serializer->deserialize($json, Product::class, 'json');
+
+        $product->getMeasurements()->setProduct($product);
+
+        $this->entityManager->persist($product);
+
+        $this->eventDispatcher->dispatch(new ProductOnCreatedEvent($product), ProductOnCreatedEvent::NAME);
+
+        return $product;
     }
 
-    public function getProductsList(PaginationRequest $request): JsonResponse
+    public function list($page = 1, $limit = 10): array
     {
-        $products = $this->factory->list($request->getPage(), $request->getLimit());
-
-        return new JsonResponse([
-            'items' => $this->serializer->normalize($products, JsonEncoder::FORMAT, [
-                'groups' => ['catalog'],
-            ]),
-            'total' => $this->factory->count(),
-            'page' => $request->getPage(),
-            'limit' => $request->getLimit(),
-        ], JsonResponse::HTTP_OK);
+        return $this->repository->getProductsList($page, $limit);
     }
 
-    public function getProduct(int $id): JsonResponse
+    public function count(): int
     {
-        if (!$this->factory->has($id)) {
-            throw new ProductNotFountException;
-        }
-
-        $product = $this->factory->get($id);
-
-        return new JsonResponse($this->serializer->normalize($product, JsonEncoder::FORMAT, [
-            'groups' => ['catalog'],
-        ]), JsonResponse::HTTP_OK);
+        return $this->repository->getProductsCount();
     }
 
-    public function createProductFromJson(string $json): Product
+    public function has(int $id): bool
     {
-        $data = json_decode($json, true);
+        return $this->repository->hasProduct($id);
+    }
+
+    public function item(int $id): Product
+    {
+        return $this->repository->getProduct($id);
+    }
+
+    public function createFromJson(string $json): Product
+    {
+        json_decode($json, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new InvalidJsonException(json_last_error_msg());
         }
 
-        return $this->factory->build($json);
+        return $this->build($json);
+    }
+
+    public function makeProduct(): Product
+    {
+        $version = Carbon::now()->timestamp;
+
+        $product = new Product;
+
+        $product->setName($this->faker->words(3, true));
+        $product->setDescription($this->faker->paragraph(3));
+        $product->setCost($this->faker->numberBetween(500, 50000));
+        $product->setTax(ceil($product->getCost() * 0.13));
+        $product->setVersion($version);
+
+        $measurement = $this->makeProductMeasurement();
+
+        if ($measurement) {
+            $product->setMeasurements($measurement);
+        }
+
+        return $product;
+    }
+
+    public function makeProductMeasurement(): ProductMeasurement
+    {
+        $productMeasurement = new ProductMeasurement;
+
+        $productMeasurement->setWeight($this->faker->numberBetween(1, 50));
+        $productMeasurement->setLength($this->faker->numberBetween(10, 100));
+        $productMeasurement->setWidth($this->faker->numberBetween(10, 100));
+        $productMeasurement->setHeight($this->faker->numberBetween(10, 100));
+
+        return $productMeasurement;
+    }
+
+    public function makeProducts(int $count): ArrayCollection
+    {
+        $products = new ArrayCollection;
+
+        for ($i = 0; $i < $count; $i++) {
+            $product = $this->makeProduct();
+
+            $products->add($product);
+        }
+
+        return $products;
+    }
+
+    public function execute(): void
+    {
+        $this->entityManager->flush();
     }
 }
